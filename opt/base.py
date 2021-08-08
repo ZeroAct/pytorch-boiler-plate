@@ -1,3 +1,4 @@
+import os
 import argparse
 import configparser
 
@@ -36,23 +37,49 @@ class BaseOpt:
         self.parser.add_argument('-d', '--weights_dir', type=str,
                                  help="Weights directory.")
         
-        self.parser.add_argument('-e', '--epochs', type=int,
+        self.parser.add_argument('-e', '--epochs', type=int, default=1,
                                  help="training epochs")
-        self.parser.add_argument('-lr', '--lr', type=float,
+        self.parser.add_argument('-lr', '--lr', type=float, default=0.001,
                                  help="learning rate")
-        self.parser.add_argument('-b', '--batch_size', type=int,
+        
+        self.parser.add_argument('--batch_size', type=int, default=4,
                                  help="batch size")
+        self.parser.add_argument('--num_workers', type=int, default=4,
+                                 help="number of threads")
+        self.parser.add_argument('--shuffle', type=bool, default=True,
+                                 help="dataset shuffle")
+        self.parser.add_argument('--drop_last', type=bool, default=True,
+                                 help="dataset drop last")
         
         self.load_config(config_path)
         self.set_custom_defaults()
     
     def set_custom_defaults(self):
-        self.parser.set_defaults(weights_dir=f"weights/{self.parser.get_default('name')}")
+        name = self.parser.get_default('name')
+        
+        project_dir = os.path.join("project", name)
+        os.makedirs(project_dir, exist_ok=True)
+        weights_dir = os.path.join(project_dir, "weights")
+        os.makedirs(weights_dir, exist_ok=True)
+        log_dir = os.path.join(project_dir, "log")
+        os.makedirs(log_dir, exist_ok=True)
+        
+        self.parser.set_defaults(project_dir=project_dir)
+        self.parser.set_defaults(weights_dir=weights_dir)
+        self.parser.set_defaults(log_dir=log_dir)
     
     def get_args(self):
-        return self.parser.parse_args()
+        opt = self.parser.parse_args()
+        
+        return opt
     
     def load_config(self, config_path):
+        try:
+            with open(config_path, 'r') as f:
+                print(''.join(list(filter(lambda x: x!='\n', f.readlines()))))
+        except:
+            raise FileNotFoundError
+        
         config = configparser.ConfigParser()
         config.read(config_path)
         
@@ -66,3 +93,4 @@ class BaseOpt:
                 else:
                     val = "'" + val + "'"
                 eval(f"self.parser.set_defaults({option}={val})")
+    
