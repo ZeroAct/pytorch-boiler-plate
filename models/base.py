@@ -116,7 +116,7 @@ class BaseModel(nn.Module):
     def get_weight_initializer(activation):
         activiation_name = activation.lower()
         
-        if activiation_name in ['relu', 'leaky_relu']:  # He
+        if activiation_name in ['relu', 'leaky_relu', 'elu']:  # He
             def init_weights(m):
                 if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                     nn.init.kaiming_normal_(m.weight, nonlinearity=activiation_name)
